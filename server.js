@@ -10,7 +10,7 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// Store payment status in memory
+// Store payment status
 const payments = {};
 
 // Home route
@@ -18,57 +18,118 @@ app.get("/", (req, res) => {
     res.send("Chat and Earn Backend Running 🚀");
 });
 
-// STK Push
+// Initiate STK Push
 app.post("/stkpush", async (req, res) => {
-
     try {
+        let { phone } = req.body;
 
-        let { phone, amount } = req.body;
+        if (!phone) {
+            return res.status(400).json({
+                success: false,
+                message: "Phone number is required"
+            });
+        }
 
         // Convert 07XXXXXXXX to 2547XXXXXXXX
         if (phone.startsWith("0")) {
             phone = "254" + phone.substring(1);
         }
 
-        console.log("Sending STK Push to:", phone);
+        const reference = "CHAT-" + Date.now();
 
         const response = await axios.post(
-            "https://optimapaybridge.co.ke/api/topup.php",
+            "https://swiftwallet.co.ke/v3/stk-initiate/",
             {
-                phone,
-                amount,
-                user_callback_url:
-                    "https://chat-and-earn-backend-1.onrender.com/callback"
+                amount: 100,
+                phone_number: phone,
+                external_reference: reference,
+                customer_name: "Chat and Earn User",
+                callback_url:
+                    "https://chat-and-earn-backend.onrender.com/callback"
             },
             {
                 headers: {
-                    "X-API-KEY": process.env.OPTIMA_API_KEY,
-                    "X-API-SECRET": process.env.OPTIMA_API_SECRET,
+                    Authorization: `Bearer ${process.env.SWIFTWALLET_API_KEY}`,
                     "Content-Type": "application/json"
                 }
             }
         );
 
-        console.log(response.data);
+        payments[reference] = {
+            status: "pending",
+            transaction_id: response.data.transaction_id || null,
+            checkout_request_id: response.data.checkout_request_id || null
+        };
 
-        if (response.data.checkout_request_id) {
-
-            payments[response.data.checkout_request_id] = "pending";
-
-        }
-
-        res.json(response.data);
+        res.json({
+            success: true,
+            reference,
+            message: response.data.message,
+            checkout_request_id: response.data.checkout_request_id
+        });
 
     } catch (err) {
-
-        console.error(err.response?.data || err.message);
+        console.error(
+            err.response?.data || err.message
+        );
 
         res.status(500).json({
             success: false,
             message: "Failed to send STK Push"
         });
-
     }
+});
+
+// SwiftWallet Callback
+app.post("/callback", (req, res) => {
+    try {
+        const data = req.body;
+
+        console.log("Callback received:", data);
+
+        const reference = data.external_reference;
+
+        if (reference) {
+            payments[reference] = {
+                status: data.status || "pending",
+                transaction_id: data.transaction_id,
+                receipt:
+                    data.result?.MpesaReceiptNumber || null,
+                amount:
+                    data.result?.Amount || null,
+                phone:
+                    data.result?.Phone || null
+            };
+        }
+
+        res.status(200).json({
+            success: true
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false
+        });
+    }
+});
+
+// Check Payment Status
+app.get("/payment-status/:reference", (req, res) => {
+
+    const reference = req.params.reference;
+
+    if (!payments[reference]) {
+        return res.json({
+            success: false,
+            status: "not_found"
+        });
+    }
+
+    res.json({
+        success: true,
+        payment: payments[reference]
+    });
 
 });
 
