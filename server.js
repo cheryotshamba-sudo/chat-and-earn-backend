@@ -36,17 +36,18 @@ app.post("/stkpush", async (req, res) => {
         }
 
         const reference = "CHAT-" + Date.now();
-
-        const response = await axios.post(
-            "https://swiftwallet.co.ke/v3/stk-initiate/",
-            {
-                amount: 100,
-                phone_number: phone,
-                external_reference: reference,
-                customer_name: "Chat and Earn User",
-                callback_url:
-                    "https://chat-and-earn-backend.onrender.com/callback"
-            },
+const response = await axios.post(
+    "https://swiftwallet.co.ke/v3/stk-initiate/",
+    {
+        amount: 100,
+        phone_number: phone,
+        channel_id: 604,
+        external_reference: reference,
+        customer_name: "Chat and Earn User",
+        callback_url:
+            "https://chat-and-earn-backend.onrender.com/callback"
+    },
+        
             {
                 headers: {
                     Authorization: `Bearer ${process.env.SWIFTWALLET_API_KEY}`,
