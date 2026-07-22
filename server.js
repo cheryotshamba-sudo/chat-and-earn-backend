@@ -39,7 +39,7 @@ app.post("/stkpush", async (req, res) => {
 const response = await axios.post(
     "https://swiftwallet.co.ke/v3/stk-initiate/",
     {
-        amount: 100,
+        amount: 10,
         phone_number: phone,
         channel_id: 604,
         external_reference: reference,
