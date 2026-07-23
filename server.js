@@ -37,8 +37,7 @@ app.post("/stkpush", async (req, res) => {
 
         const reference = "CHAT-" + Date.now();
 
-        const response = await axios.post(
-    "https://autopay.co.ke/api/stk-push",
+        
     
         
        const response = await axios.post(
