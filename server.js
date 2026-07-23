@@ -41,12 +41,14 @@ app.post("/stkpush", async (req, res) => {
     "https://autopay.co.ke/api/stk-push",
     {
         merchantId: process.env.AUTOPAY_MERCHANT_ID,
-        amount: 10,
-        phone: phone,
-        accountReference: reference,
-        description: "Chat and Earn Activation",
-        callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
-    },
+        {
+    merchantId: "APY772871",
+    amount: 10,
+    phone: phone,
+    accountReference: reference,
+    description: "Chat and Earn Activation",
+    callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
+}
             {
                 headers: {
                     Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
