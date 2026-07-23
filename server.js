@@ -38,14 +38,15 @@ app.post("/stkpush", async (req, res) => {
         const reference = "CHAT-" + Date.now();
 
         const response = await axios.post(
-            "https://autopay.co.ke/api/stk-push",
-            {
-                amount: 10,
-                phone: phone,
-                accountReference: reference,
-                description: "Chat and Earn Activation",
-                callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
-            },
+    "https://autopay.co.ke/api/stk-push",
+    {
+        merchantId: process.env.AUTOPAY_MERCHANT_ID,
+        amount: 10,
+        phone: phone,
+        accountReference: reference,
+        description: "Chat and Earn Activation",
+        callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
+    },
             {
                 headers: {
                     Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
