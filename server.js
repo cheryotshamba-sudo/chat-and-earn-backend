@@ -77,7 +77,8 @@ console.log({
         });
 
     } catch (err) {
-        console.error("STK Push Error:", err.response?.data || err.message);
+    console.error("Status:", err.response?.status);
+    console.error("Response:", err.response?.data);
 
         return res.status(500).json({
             success: false,
