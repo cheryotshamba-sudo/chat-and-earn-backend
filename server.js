@@ -49,7 +49,7 @@ app.post("/stkpush", async (req, res) => {
             {
                 headers: {
                     Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
-                    "X-Public-Key": process.env.AUTOPAY_PUBLIC_KEY,
+                    
                     "Content-Type": "application/json",
                     Accept: "application/json"
                 }
