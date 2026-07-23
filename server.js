@@ -36,7 +36,13 @@ app.post("/stkpush", async (req, res) => {
         }
 
         const reference = "CHAT-" + Date.now();
-
+console.log({
+    amount: 10,
+    phone,
+    accountReference: reference,
+    description: "Chat and Earn Activation",
+    callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
+});
         const response = await axios.post(
             "https://autopay.co.ke/api/stk-push",
             {
