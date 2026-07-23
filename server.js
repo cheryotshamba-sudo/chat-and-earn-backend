@@ -38,9 +38,9 @@ app.post("/stkpush", async (req, res) => {
         const reference = "CHAT-" + Date.now();
 
         
-    
-        
-       const response = await axios.post(
+    const reference = "CHAT-" + Date.now();
+
+const response = await axios.post(
     "https://autopay.co.ke/api/stk-push",
     {
         merchantId: "APY772871",
@@ -58,15 +58,14 @@ app.post("/stkpush", async (req, res) => {
         }
     }
 );
-    
-                    Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
-                    
-                    "Content-Type": "application/json",
-                    Accept: "application/json"
-                }
-            }
-        );
 
+payments[reference] = {
+    status: "pending",
+    checkoutRequestId: response.data.checkoutRequestId || null,
+    merchantRequestId: response.data.merchantRequestId || null
+};
+        
+       
         payments[reference] = {
             status: "pending",
             checkoutRequestId: response.data.checkoutRequestId || null,
