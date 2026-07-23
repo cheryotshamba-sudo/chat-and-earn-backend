@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 // Store payment status
 const payments = {};
@@ -36,91 +36,80 @@ app.post("/stkpush", async (req, res) => {
         }
 
         const reference = "CHAT-" + Date.now();
-const response = await axios.post(
-    "https://swiftwallet.co.ke/v3/stk-initiate/",
-    {
-        amount: 10,
-        phone_number: phone,
-        channel_id: 604,
-        external_reference: reference,
-        customer_name: "Chat and Earn User",
-        callback_url:
-            "https://chat-and-earn-backend.onrender.com/callback"
-    },
-        
+
+        const response = await axios.post(
+            "https://autopay.co.ke/api/stk-push",
+            {
+                amount: 10,
+                phone: phone,
+                accountReference: reference,
+                description: "Chat and Earn Activation",
+                callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
+            },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.SWIFTWALLET_API_KEY}`,
-                    "Content-Type": "application/json"
+                    Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
+                    "X-Public-Key": process.env.AUTOPAY_PUBLIC_KEY,
+                    "Content-Type": "application/json",
+                    Accept: "application/json"
                 }
             }
         );
 
         payments[reference] = {
             status: "pending",
-            transaction_id: response.data.transaction_id || null,
-            checkout_request_id: response.data.checkout_request_id || null
+            checkoutRequestId: response.data.checkoutRequestId || null,
+            merchantRequestId: response.data.merchantRequestId || null
         };
 
         res.json({
             success: true,
             reference,
-            message: response.data.message,
-            checkout_request_id: response.data.checkout_request_id
+            checkoutRequestId: response.data.checkoutRequestId,
+            message: response.data.message
         });
 
     } catch (err) {
-        console.error(
-            err.response?.data || err.message
-        );
+
+        console.error(err.response?.data || err.message);
 
         res.status(500).json({
             success: false,
-            message: "Failed to send STK Push"
+            message: err.response?.data?.message || "Failed to send STK Push"
         });
+
     }
 });
 
-// SwiftWallet Callback
+// AUTOPAY Callback
 app.post("/callback", (req, res) => {
-    try {
-        const data = req.body;
 
-        console.log("Callback received:", data);
+    const data = req.body;
 
-        const reference = data.external_reference;
+    console.log("AUTOPAY Callback:", data);
 
-        if (reference) {
-            payments[reference] = {
-                status: data.status || "pending",
-                transaction_id: data.transaction_id,
-                receipt:
-                    data.result?.MpesaReceiptNumber || null,
-                amount:
-                    data.result?.Amount || null,
-                phone:
-                    data.result?.Phone || null
-            };
-        }
+    if (data.reference) {
 
-        res.status(200).json({
-            success: true
-        });
+        payments[data.reference] = {
+            status: data.status,
+            amount: data.amount,
+            phone: data.phone
+        };
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false
-        });
     }
+
+    res.status(200).json({
+        success: true
+    });
+
 });
 
 // Check Payment Status
 app.get("/payment-status/:reference", (req, res) => {
 
-    const reference = req.params.reference;
+    const payment = payments[req.params.reference];
 
-    if (!payments[reference]) {
+    if (!payment) {
         return res.json({
             success: false,
             status: "not_found"
@@ -129,7 +118,7 @@ app.get("/payment-status/:reference", (req, res) => {
 
     res.json({
         success: true,
-        payment: payments[reference]
+        payment
     });
 
 });
