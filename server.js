@@ -37,86 +37,69 @@ app.post("/stkpush", async (req, res) => {
 
         const reference = "CHAT-" + Date.now();
 
-        
-    const reference = "CHAT-" + Date.now();
+        const response = await axios.post(
+            "https://autopay.co.ke/api/stk-push",
+            {
+                merchantId: "APY772871",
+                amount: 10,
+                phone: phone,
+                accountReference: reference,
+                description: "Chat and Earn Activation",
+                callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json"
+                }
+            }
+        );
 
-const response = await axios.post(
-    "https://autopay.co.ke/api/stk-push",
-    {
-        merchantId: "APY772871",
-        amount: 10,
-        phone: phone,
-        accountReference: reference,
-        description: "Chat and Earn Activation",
-        callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
-    },
-    {
-        headers: {
-            Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
-            "Content-Type": "application/json",
-            Accept: "application/json"
-        }
-    }
-);
-
-payments[reference] = {
-    status: "pending",
-    checkoutRequestId: response.data.checkoutRequestId || null,
-    merchantRequestId: response.data.merchantRequestId || null
-};
-        
-       
         payments[reference] = {
             status: "pending",
             checkoutRequestId: response.data.checkoutRequestId || null,
             merchantRequestId: response.data.merchantRequestId || null
         };
 
-        res.json({
+        return res.json({
             success: true,
             reference,
-            checkoutRequestId: response.data.checkoutRequestId,
-            message: response.data.message
+            checkoutRequestId: response.data.checkoutRequestId || null,
+            merchantRequestId: response.data.merchantRequestId || null,
+            message: response.data.message || "STK Push sent successfully"
         });
 
     } catch (err) {
+        console.error("STK Push Error:", err.response?.data || err.message);
 
-        console.error(err.response?.data || err.message);
-
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: err.response?.data?.message || "Failed to send STK Push"
         });
-
     }
 });
 
-// AUTOPAY Callback
+// Callback
 app.post("/callback", (req, res) => {
-
     const data = req.body;
 
-    console.log("AUTOPAY Callback:", data);
+    console.log("AUTOPAY CALLBACK:", data);
 
     if (data.reference) {
-
         payments[data.reference] = {
-            status: data.status,
+            status: data.status || "completed",
             amount: data.amount,
-            phone: data.phone
+            phone: data.phone,
+            transactionCode: data.transactionCode || null
         };
-
     }
 
-    res.status(200).json({
-        success: true
-    });
-
+    res.status(200).json({ success: true });
 });
 
-// Check Payment Status
+// Check payment status
 app.get("/payment-status/:reference", (req, res) => {
-
     const payment = payments[req.params.reference];
 
     if (!payment) {
@@ -126,13 +109,13 @@ app.get("/payment-status/:reference", (req, res) => {
         });
     }
 
-    res.json({
+    return res.json({
         success: true,
         payment
     });
-
 });
 
+// Start server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
