@@ -40,7 +40,7 @@ app.post("/stkpush", async (req, res) => {
         const response = await axios.post(
     "https://autopay.co.ke/api/stk-push",
     {
-        merchantId: process.env.AUTOPAY_MERCHANT_ID,
+        
         {
     merchantId: "APY772871",
     amount: 10,
