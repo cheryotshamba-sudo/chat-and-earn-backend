@@ -124,11 +124,11 @@ app.get("/payment-status/:reference", async (req, res) => {
         }
 
         // Ask AUTOPAY for the latest payment status
-        const response = await axios.post(
-            "https://autopay.co.ke/api/check-status",
-            {
-                checkoutRequestId: payment.checkoutRequestId
-            },
+       const response = await axios.post(
+    "https://autopay.co.ke/api/check-status",
+    {
+        checkout_request_id: payment.checkoutRequestId
+    }, 
             {
                 headers: {
                     Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
