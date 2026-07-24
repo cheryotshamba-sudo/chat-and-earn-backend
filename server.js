@@ -66,8 +66,8 @@ console.log({
 
         payments[reference] = {
             status: "pending",
-            checkoutRequestId: response.data.checkoutRequestId || null,
-            merchantRequestId: response.data.merchantRequestId || null
+           checkoutRequestId: response.data.data?.checkout_request_id || null,
+merchantRequestId: response.data.data?.merchant_request_id || null 
         };
 
         return res.json({
