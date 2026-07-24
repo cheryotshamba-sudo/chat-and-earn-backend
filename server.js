@@ -36,47 +36,42 @@ app.post("/stkpush", async (req, res) => {
         }
 
         const reference = "CHAT-" + Date.now();
+
 console.log({
-    amount: 10,
     phone,
-    "{
-    phone: phone,
     amount: 10,
     balanceType: "wallet"
-}
 });
-        const response = await axios.post(
-            "https://autopay.co.ke/api/stk-push",
-            {
-                
-                amount: 10,
-                phone: phone,
-                accountReference: reference,
-                description: "Chat and Earn Activation",
-                callbackUrl: "https://chat-and-earn-backend.onrender.com/callback"
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
-                    "Content-Type": "application/json",
-                    Accept: "application/json"
-                }
-            }
-        );
 
-        payments[reference] = {
-            status: "pending",
-           checkoutRequestId: response.data.data?.checkout_request_id || null,
-merchantRequestId: response.data.data?.merchant_request_id || null 
-        };
+const response = await axios.post(
+    "https://autopay.co.ke/api/stk-push",
+    {
+        phone: phone,
+        amount: 10,
+        balanceType: "wallet"
+    },
+    {
+        headers: {
+            Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
+            "Content-Type": "application/json",
+            Accept: "application/json"
+        }
+    }
+);
 
-        return res.json({
-            success: true,
-            reference,
-            checkoutRequestId: response.data.checkoutRequestId || null,
-            merchantRequestId: response.data.merchantRequestId || null,
-            message: response.data.message || "STK Push sent successfully"
-        });
+payments[reference] = {
+    status: "pending",
+    checkoutRequestId: response.data.data?.checkout_request_id || null,
+    merchantRequestId: response.data.data?.merchant_request_id || null
+};
+
+return res.json({
+    success: true,
+    reference,
+    checkoutRequestId: response.data.data?.checkout_request_id || null,
+    merchantRequestId: response.data.data?.merchant_request_id || null,
+    message: response.data.message || "STK Push sent successfully"
+});
 
     } catch (err) {
     console.error("Status:", err.response?.status);
