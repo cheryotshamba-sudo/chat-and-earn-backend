@@ -103,7 +103,8 @@ app.post("/callback", (req, res) => {
 });
 
 // Check payment status
-app.get("/payment-status/:reference", (req, res) => {
+// Check payment status
+app.get("/payment-status/:reference", async (req, res) => {
     const payment = payments[req.params.reference];
 
     if (!payment) {
@@ -113,10 +114,51 @@ app.get("/payment-status/:reference", (req, res) => {
         });
     }
 
-    return res.json({
-        success: true,
-        payment
-    });
+    try {
+        // If we don't have a checkout request ID yet, just return what we know
+        if (!payment.checkoutRequestId) {
+            return res.json({
+                success: true,
+                payment
+            });
+        }
+
+        // Ask AUTOPAY for the latest payment status
+        const response = await axios.post(
+            "https://autopay.co.ke/api/check-status",
+            {
+                checkoutRequestId: payment.checkoutRequestId
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.AUTOPAY_SECRET_KEY}`,
+                    "Content-Type": "application/json",
+                    Accept: "application/json"
+                }
+            }
+        );
+
+        // Update the stored payment status
+        if (response.data.success) {
+            payment.status =
+                response.data.data?.transaction?.status ||
+                response.data.status ||
+                payment.status;
+        }
+
+        return res.json({
+            success: true,
+            payment
+        });
+
+    } catch (err) {
+        console.error("Status check error:", err.response?.data || err.message);
+
+        return res.json({
+            success: true,
+            payment
+        });
+    }
 });
 
 // Start server
